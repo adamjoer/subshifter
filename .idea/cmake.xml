@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CMakeSharedSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" GENERATION_DIR="$PROJECT_DIR$/build/debug" CONFIG_NAME="Debug" GENERATION_OPTIONS="-G Ninja" />
+      <configuration PROFILE_NAME="Release" ENABLED="true" GENERATION_DIR="$PROJECT_DIR$/build/release" CONFIG_NAME="Release" GENERATION_OPTIONS="-G Ninja" />
+      <configuration PROFILE_NAME="Debug-WSL" ENABLED="true" GENERATION_DIR="$PROJECT_DIR$/build/debug-wsl" CONFIG_NAME="Debug" TOOLCHAIN_NAME="WSL" />
+      <configuration PROFILE_NAME="Release-WSL" ENABLED="true" GENERATION_DIR="$PROJECT_DIR$/build/release-wsl" CONFIG_NAME="Release" TOOLCHAIN_NAME="WSL" />
+    </configurations>
+  </component>
+</project>
