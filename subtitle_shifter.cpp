@@ -12,13 +12,13 @@ namespace fs = std::filesystem;
 using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::regex, std::ifstream,
         std::ofstream, std::string, std::getline, std::smatch;
 
-SubtitleShifter::SubtitleShifter(int numberOfFiles) : mPaths() {
+SubtitleShifter::SubtitleShifter(int numberOfFiles) : mPaths(), mDestinationPath() {
     mPaths.reserve(std::max(numberOfFiles, 0));
 }
 
-bool SubtitleShifter::parseArguments(int argc, char **argv) {
+bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
     if (argc < 3) {
-        cout << "Usage: " << argv[0] << " [-m] <offset-ms> <filepath>...\n";
+        printUsage(argv[0]);
         return mAreArgumentsValid = false;
     }
 
@@ -35,9 +35,39 @@ bool SubtitleShifter::parseArguments(int argc, char **argv) {
                 break;
             }
 
-            // TODO: Implement support for destination file path with "-d" flag
             if (flag == 'm') {
+                if (mIsDestinationPathSpecified) {
+                    cerr << "Switches 'm' and 'd' are incongruous\n";
+                    return mAreArgumentsValid = false;
+                }
+
                 mDoModify = true;
+
+            } else if (flag == 'd') {
+                if (mDoModify) {
+                    cerr << "Switches 'm' and 'd' are incongruous\n";
+                    return mAreArgumentsValid = false;
+                }
+
+                if (mIsDestinationPathSpecified)
+                    continue;
+
+                if (i == argc - 1 && j == len - 1) {
+                    cerr << "No destination path specified after 'd' switch\n";
+                    return mAreArgumentsValid = false;
+                }
+
+                string destinationPath = (j == len - 1) ? argv[++i] : argv[i] + j + 1;
+
+                mDestinationPath = destinationPath;
+                if (!fs::is_directory(mDestinationPath)) {
+                    cerr << "Invalid directory " << mDestinationPath << '\n';
+                    return mAreArgumentsValid = false;
+                }
+
+                mIsDestinationPathSpecified = true;
+
+                break;
 
             } else {
                 cerr << "Unknown switch '" << flag << "'\n";
@@ -47,6 +77,11 @@ bool SubtitleShifter::parseArguments(int argc, char **argv) {
 
         if (doBreak)
             break;
+    }
+
+    if (i > argc - 2) {
+        printUsage(argv[0]);
+        return mAreArgumentsValid = false;
     }
 
     try {
@@ -65,7 +100,7 @@ bool SubtitleShifter::parseArguments(int argc, char **argv) {
 
         auto path = mPaths.emplace_back(argv[i]);
         if (!fs::is_regular_file(path)) {
-            cerr << "File " << path << " does not exist\n";
+            cerr << "Invalid file " << path << '\n';
             return mAreArgumentsValid = false;
 
         } else if (path.extension() != ".srt") {
@@ -96,6 +131,10 @@ bool SubtitleShifter::parseArguments(int argc, char **argv) {
     return mAreArgumentsValid = true;
 }
 
+void SubtitleShifter::printUsage(char *programName) {
+    cout << "Usage: " << programName << " [-m | -d <destination-path>] <offset-ms> <filepath>...\n";
+}
+
 void SubtitleShifter::shift() {
     if (!mAreArgumentsValid || mPaths.empty())
         return;
@@ -114,10 +153,13 @@ void SubtitleShifter::shift() {
             return;
         }
 
-        auto outputPath = path.stem().string() + "_shifted" + path.extension().string();
+        fs::path outputPath(path.stem().string() + "_shifted" + path.extension().string());
+        if (mIsDestinationPathSpecified)
+            outputPath = mDestinationPath / outputPath;
+
         ofstream outStream(outputPath);
         if (!outStream.is_open()) {
-            cerr << "Cannot open output file \"" << outputPath << "\"\n";
+            cerr << "Cannot open output file " << outputPath << "\n";
             return;
         }
 
@@ -138,7 +180,7 @@ void SubtitleShifter::shift() {
                 to += offset;
 
                 if (from.isNegative() || to.isNegative())
-                    cout << "Warning: Shifting has produced negative timestamp in file \"" << outputPath << "\", line #"
+                    cout << "Warning: Shifting has produced negative timestamp in file " << outputPath << ", line #"
                          << lineNumber << '\n';
 
                 outStream << from << " --> " << to;
