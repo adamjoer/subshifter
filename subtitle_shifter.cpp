@@ -171,9 +171,10 @@ void SubtitleShifter::shift() {
                 from += offset;
                 to += offset;
 
-                if (from.isNegative() || to.isNegative())
-                    cout << "Warning: Shifting has produced negative timestamp in file " << outputPath << ", line #"
-                         << lineNumber << '\n';
+                if (from.isNegative() || to.isNegative()) {
+                    cout << "Warning: Shifting has produced negative timestamp in file "
+                         << (mDoModify ? path : outputPath) << ", line #" << lineNumber << '\n';
+                }
 
                 outStream << from << " --> " << to;
 
