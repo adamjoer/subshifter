@@ -24,16 +24,11 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
     int i;
     for (i = 1; i < argc; ++i) {
-        if (argv[i][0] != '-')
+        if (argv[i][0] != '-' || isdigit(argv[i][1]))
             break;
 
-        bool doBreak = false;
         for (int j = 1, len = (int) strlen(argv[i]); j < len; ++j) {
             auto flag = argv[i][j];
-            if (isdigit(flag)) {
-                doBreak = true;
-                break;
-            }
 
             if (flag == 'm') {
                 if (mIsDestinationPathSpecified) {
@@ -74,9 +69,6 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
                 return mAreArgumentsValid = false;
             }
         }
-
-        if (doBreak)
-            break;
     }
 
     if (i > argc - 2) {
