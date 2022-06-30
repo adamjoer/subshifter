@@ -131,9 +131,9 @@ void SubtitleShifter::shift() {
     if (!mAreArgumentsValid || mPaths.empty())
         return;
 
-    // https://regex101.com/r/Qus4qM/1
+    // https://regex101.com/r/QqJejY/1
     const regex srtTimeStampRegex(
-            R"(((?:00|\d+)):([0-5]\d):([0-5]\d),(\d{3})\W*-->\W*((?:00|\d+)):([0-5]\d):([0-5]\d),(\d{3}))");
+            R"(((?:0\d|[1-9]\d+)):([0-5]\d):([0-5]\d),(\d{3})\W*-->\W*((?:0\d|[1-9]\d+)):([0-5]\d):([0-5]\d),(\d{3}))");
 
     const TimeStamp offset(mMillisecondsOffset);
 
