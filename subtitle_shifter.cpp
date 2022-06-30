@@ -52,14 +52,14 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
                     return mAreArgumentsValid = false;
                 }
 
-                string destinationPath = (j == len - 1) ? argv[++i] : argv[i] + j + 1;
+                fs::path destinationPath((j == len - 1) ? argv[++i] : argv[i] + j + 1);
 
-                mDestinationPath = destinationPath;
-                if (!fs::is_directory(mDestinationPath)) {
-                    cerr << "Invalid directory " << mDestinationPath << '\n';
+                if (!fs::is_directory(destinationPath)) {
+                    cerr << "Invalid directory " << destinationPath << '\n';
                     return mAreArgumentsValid = false;
                 }
 
+                mDestinationPath = destinationPath;
                 mIsDestinationPathSpecified = true;
 
                 break;
