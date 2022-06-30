@@ -155,11 +155,12 @@ void SubtitleShifter::shift() {
             return;
         }
 
-        string line;
         int lineNumber = 1;
+
+        string line;
         while (getline(inStream, line)) {
-            if (line.length() > 0 && line[line.length() - 1] == '\r')
-                line.erase(line.end() - 1);
+            if (!line.empty() && line.back() == '\r')
+                line.pop_back();
 
             smatch timeStampMatches;
             if (regex_match(line, timeStampMatches, srtTimeStampRegex)) {
@@ -178,7 +179,7 @@ void SubtitleShifter::shift() {
 
                 outStream << from << " --> " << to;
 
-            } else if (line.length() > 0) {
+            } else if (!line.empty()) {
                 outStream << line;
             }
 
