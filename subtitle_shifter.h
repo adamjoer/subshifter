@@ -5,6 +5,12 @@
 #include <ostream>
 
 class SubtitleShifter {
+public:
+    explicit SubtitleShifter(int numberOfFiles);
+
+    bool parseArguments(int argc, char *argv[]);
+
+    void shift();
 
 private:
     int mMillisecondsOffset = 0;
@@ -20,11 +26,4 @@ private:
     std::filesystem::path mDestinationPath;
 
     static void printUsage(char *programName);
-
-public:
-    explicit SubtitleShifter(int numberOfFiles);
-
-    bool parseArguments(int argc, char *argv[]);
-
-    void shift();
 };
