@@ -2,7 +2,6 @@
 
 #include <vector>
 #include <filesystem>
-#include <ostream>
 
 class SubtitleShifter {
 public:
