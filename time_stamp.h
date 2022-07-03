@@ -8,7 +8,7 @@ struct TimeStamp {
     explicit TimeStamp(int milliseconds) : milliseconds(milliseconds) {
     }
 
-    TimeStamp(int hours, int minutes, int seconds, int milliseconds): milliseconds(milliseconds) {
+    TimeStamp(int hours, int minutes, int seconds, int milliseconds) : milliseconds(milliseconds) {
         this->milliseconds += seconds * 1000;
         this->milliseconds += minutes * 1000 * 60;
         this->milliseconds += hours * 1000 * 60 * 60;
