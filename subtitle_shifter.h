@@ -22,6 +22,8 @@ private:
 
     bool mIsDestinationPathSpecified = false;
 
+    bool mDoRecurse = false;
+
     std::filesystem::path mDestinationPath;
 
     static void printUsage(char *programName);

@@ -60,6 +60,9 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
                 break;
 
+            } else if (flag == 'r') {
+                mDoRecurse = true;
+
             } else {
                 cerr << "Unknown switch '" << flag << "'\n";
                 return mAreArgumentsValid = false;
@@ -99,14 +102,27 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
         } else if (fs::is_directory(path)) {
 
-            for (auto const &directoryEntry: fs::directory_iterator(path)) {
-                if (!directoryEntry.is_regular_file())
-                    continue;
+            if (mDoRecurse) {
+                for (auto const &directoryEntry: fs::recursive_directory_iterator(path)) {
+                    if (!directoryEntry.is_regular_file())
+                        continue;
 
-                if (!isFileValid(directoryEntry.path()))
-                    return mAreArgumentsValid = false;
+                    if (!isFileValid(directoryEntry.path()))
+                        return mAreArgumentsValid = false;
 
-                mPaths.push_back(directoryEntry.path());
+                    mPaths.push_back(directoryEntry.path());
+                }
+
+            } else {
+                for (auto const &directoryEntry: fs::directory_iterator(path)) {
+                    if (!directoryEntry.is_regular_file())
+                        continue;
+
+                    if (!isFileValid(directoryEntry.path()))
+                        return mAreArgumentsValid = false;
+
+                    mPaths.push_back(directoryEntry.path());
+                }
             }
 
         } else {
@@ -124,7 +140,7 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 }
 
 void SubtitleShifter::printUsage(char *programName) {
-    cout << "Usage: " << programName << " [-m | -d <destination-path>] <offset-ms> <path>...\n";
+    cout << "Usage: " << programName << " [-m | -d <destination-path>] [-r] <offset-ms> <path>...\n";
 }
 
 void SubtitleShifter::shift() {
