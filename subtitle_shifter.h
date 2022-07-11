@@ -30,7 +30,7 @@ private:
 
     std::filesystem::path mDestinationPath;
 
-    static void printUsage(char *programName);
+    static void printUsage(const char *programName);
 
     [[nodiscard]] bool isFileValid(const std::filesystem::path &path) const;
 };

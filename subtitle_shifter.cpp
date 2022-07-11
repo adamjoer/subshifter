@@ -151,8 +151,15 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
     return mAreArgumentsValid = true;
 }
 
-void SubtitleShifter::printUsage(char *programName) {
-    cout << "Usage: " << programName << " [-m | -d <destination-path>] [-r] [-i] <offset-ms> <path>...\n";
+void SubtitleShifter::printUsage(const char *programName) {
+    cout << "Usage: " << programName << R"( [option]... <offset-ms> <path>...
+
+    -m                      Modify the file(s) instead of creating new file(s) with the shifted subtitles
+    -d <destination-path>   Set destination directory for output files
+    -r                      Recursively add files in a directory and its subdirectories
+    -i                      Ignore invalid files provided with <path>
+
+)";
 }
 
 void SubtitleShifter::shift() {
@@ -235,7 +242,7 @@ bool SubtitleShifter::isFileValid(const std::filesystem::path &path) const {
     if (path.extension() != ".srt") {
         if (!mIgnoreInvalidFiles) {
             cerr << "File type " << path.extension() << " (" << path << ") is not supported.\n"
-                                                        "Supported file types are: .srt\n";
+                                                                        "Supported file types are: .srt\n";
         }
         return false;
     }
