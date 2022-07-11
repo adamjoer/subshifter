@@ -7,6 +7,8 @@ class SubtitleShifter {
 public:
     SubtitleShifter() = default;
 
+    ~SubtitleShifter() = default;
+
     bool parseArguments(int argc, char *argv[]);
 
     void shift();
