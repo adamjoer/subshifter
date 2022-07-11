@@ -1,0 +1,44 @@
+1
+00:00:00,000 --> 00:00:01,000
+This is an example of
+a subtitle.
+
+2
+00:01:30,500 --> 00:01:35,000
+This is an example of
+a subtitle - 2nd subtitle.
+
+3
+00:02:16,612 --> 00:02:19,376
+Senator, we're making
+our final approach into Coruscant.
+
+4
+00:02:19,482 --> 00:02:21,609
+Very good, Lieutenant.
+
+5
+00:03:13,336 --> 00:03:15,167
+We made it.
+
+6
+00:03:18,608 --> 00:03:20,371
+I guess I was wrong.
+
+7
+00:03:20,476 --> 00:03:22,671
+There was no danger at all.
+
+8
+01:00:00,000 --> 01:00:01,000
+You'd say anything now
+to get what you want.
+
+9
+01:59:59,000 --> 02:00:04,000
+You want to feel sorry for yourself,
+don't you?
+
+10
+99:59:59,000 --> 99:59:59,999
+This is finally the end.
