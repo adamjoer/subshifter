@@ -2,7 +2,7 @@
 
 int main(int argc, char *argv[]) {
 
-    SubtitleShifter shifter(argc - 2);
+    SubtitleShifter shifter;
 
     if (!shifter.parseArguments(argc, argv))
         return 1;

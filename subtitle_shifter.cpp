@@ -9,12 +9,8 @@
 #include "time_stamp.h"
 
 namespace fs = std::filesystem;
-using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::regex, std::ifstream,
+using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::move, std::regex, std::ifstream,
         std::ofstream, std::string, std::getline, std::smatch;
-
-SubtitleShifter::SubtitleShifter(int numberOfFiles) : mPaths(), mDestinationPath() {
-    mPaths.reserve(std::max(numberOfFiles, 0));
-}
 
 bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
     if (argc < 3) {
@@ -90,33 +86,37 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
     for (++i; i < argc; ++i) {
 
-        auto path = mPaths.emplace_back(argv[i]);
-        if (!fs::is_regular_file(path)) {
-            cerr << "Invalid file " << path << '\n';
-            return mAreArgumentsValid = false;
+        fs::path path(argv[i]);
+        if (path.filename() == "*")
+            path.remove_filename();
 
-        } else if (path.extension() != ".srt") {
-            cerr << "File type " << path.extension() << " is not supported.\n"
-                                                        "Supported file types are: .srt\n";
-            return mAreArgumentsValid = false;
+        if (fs::is_regular_file(path)) {
+
+            if (!isFileValid(path))
+                return mAreArgumentsValid = false;
+
+            mPaths.push_back(move(path));
+
+        } else if (fs::is_directory(path)) {
+
+            for (auto const &directoryEntry: fs::directory_iterator(path)) {
+                if (!directoryEntry.is_regular_file())
+                    continue;
+
+                if (!isFileValid(directoryEntry.path()))
+                    return mAreArgumentsValid = false;
+
+                mPaths.push_back(directoryEntry.path());
+            }
 
         } else {
-            auto status = fs::status(path);
-
-            if ((status.permissions() & fs::perms::group_read) == fs::perms::none) {
-                cerr << "There are insufficient permissions to read file " << path << '\n';
-                return mAreArgumentsValid = false;
-            }
-
-            if (mDoModify && (status.permissions() & fs::perms::group_write) == fs::perms::none) {
-                cerr << "There are insufficient permissions to modify file " << path << '\n';
-                return mAreArgumentsValid = false;
-            }
+            cerr << "Invalid file/directory " << path << '\n';
+            return mAreArgumentsValid = false;
         }
     }
 
     if (mPaths.empty()) {
-        cerr << "No files provided\n";
+        cerr << "No valid files provided\n";
         return mAreArgumentsValid = false;
     }
 
@@ -124,7 +124,7 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 }
 
 void SubtitleShifter::printUsage(char *programName) {
-    cout << "Usage: " << programName << " [-m | -d <destination-path>] <offset-ms> <filepath>...\n";
+    cout << "Usage: " << programName << " [-m | -d <destination-path>] <offset-ms> <path>...\n";
 }
 
 void SubtitleShifter::shift() {
@@ -201,4 +201,26 @@ void SubtitleShifter::shift() {
             }
         }
     }
+}
+
+bool SubtitleShifter::isFileValid(const std::filesystem::path &path) const {
+    if (path.extension() != ".srt") {
+        cerr << "File type " << path.extension() << " is not supported.\n"
+                                                    "Supported file types are: .srt\n";
+        return false;
+    }
+
+    auto status = fs::status(path);
+
+    if ((status.permissions() & fs::perms::group_read) == fs::perms::none) {
+        cerr << "There are insufficient permissions to read file " << path << '\n';
+        return false;
+    }
+
+    if (mDoModify && (status.permissions() & fs::perms::group_write) == fs::perms::none) {
+        cerr << "There are insufficient permissions to modify file " << path << '\n';
+        return false;
+    }
+
+    return true;
 }

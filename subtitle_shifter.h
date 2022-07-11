@@ -5,7 +5,7 @@
 
 class SubtitleShifter {
 public:
-    explicit SubtitleShifter(int numberOfFiles);
+    SubtitleShifter() = default;
 
     bool parseArguments(int argc, char *argv[]);
 
@@ -25,4 +25,6 @@ private:
     std::filesystem::path mDestinationPath;
 
     static void printUsage(char *programName);
+
+    [[nodiscard]] bool isFileValid(const std::filesystem::path &path) const;
 };
