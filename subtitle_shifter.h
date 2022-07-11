@@ -24,6 +24,8 @@ private:
 
     bool mDoRecurse = false;
 
+    bool mIgnoreInvalidFiles = false;
+
     std::filesystem::path mDestinationPath;
 
     static void printUsage(char *programName);

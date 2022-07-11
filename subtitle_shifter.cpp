@@ -60,6 +60,9 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
                 break;
 
+            } else if (flag == 'i') {
+                mIgnoreInvalidFiles = true;
+
             } else if (flag == 'r') {
                 mDoRecurse = true;
 
@@ -95,8 +98,11 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
         if (fs::is_regular_file(path)) {
 
-            if (!isFileValid(path))
+            if (!isFileValid(path)) {
+                if (mIgnoreInvalidFiles)
+                    continue;
                 return mAreArgumentsValid = false;
+            }
 
             mPaths.push_back(move(path));
 
@@ -107,8 +113,11 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
                     if (!directoryEntry.is_regular_file())
                         continue;
 
-                    if (!isFileValid(directoryEntry.path()))
+                    if (!isFileValid(directoryEntry.path())) {
+                        if (mIgnoreInvalidFiles)
+                            continue;
                         return mAreArgumentsValid = false;
+                    }
 
                     mPaths.push_back(directoryEntry.path());
                 }
@@ -118,8 +127,11 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
                     if (!directoryEntry.is_regular_file())
                         continue;
 
-                    if (!isFileValid(directoryEntry.path()))
+                    if (!isFileValid(directoryEntry.path())) {
+                        if (mIgnoreInvalidFiles)
+                            continue;
                         return mAreArgumentsValid = false;
+                    }
 
                     mPaths.push_back(directoryEntry.path());
                 }
@@ -140,7 +152,7 @@ bool SubtitleShifter::parseArguments(int argc, char *argv[]) {
 }
 
 void SubtitleShifter::printUsage(char *programName) {
-    cout << "Usage: " << programName << " [-m | -d <destination-path>] [-r] <offset-ms> <path>...\n";
+    cout << "Usage: " << programName << " [-m | -d <destination-path>] [-r] [-i] <offset-ms> <path>...\n";
 }
 
 void SubtitleShifter::shift() {
@@ -221,20 +233,24 @@ void SubtitleShifter::shift() {
 
 bool SubtitleShifter::isFileValid(const std::filesystem::path &path) const {
     if (path.extension() != ".srt") {
-        cerr << "File type " << path.extension() << " is not supported.\n"
-                                                    "Supported file types are: .srt\n";
+        if (!mIgnoreInvalidFiles) {
+            cerr << "File type " << path.extension() << " (" << path << ") is not supported.\n"
+                                                        "Supported file types are: .srt\n";
+        }
         return false;
     }
 
     auto status = fs::status(path);
 
     if ((status.permissions() & fs::perms::group_read) == fs::perms::none) {
-        cerr << "There are insufficient permissions to read file " << path << '\n';
+        if (!mIgnoreInvalidFiles)
+            cerr << "There are insufficient permissions to read file " << path << '\n';
         return false;
     }
 
     if (mDoModify && (status.permissions() & fs::perms::group_write) == fs::perms::none) {
-        cerr << "There are insufficient permissions to modify file " << path << '\n';
+        if (!mIgnoreInvalidFiles)
+            cerr << "There are insufficient permissions to modify file " << path << '\n';
         return false;
     }
 
