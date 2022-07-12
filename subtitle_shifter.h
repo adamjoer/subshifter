@@ -9,7 +9,7 @@ public:
 
     ~SubtitleShifter() = default;
 
-    bool parseArguments(int argc, char *argv[]);
+    bool parseArguments(int argc, char *const argv[]);
 
     void shift();
 
@@ -18,7 +18,7 @@ private:
 
     std::vector<std::filesystem::path> mPaths;
 
-    bool mAreArgumentsValid = true;
+    bool mAreArgumentsValid = false;
 
     bool mDoModify = false;
 
