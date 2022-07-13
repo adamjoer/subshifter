@@ -14,6 +14,8 @@ public:
     void shift();
 
 private:
+    std::string mExecutableName;
+
     int mMillisecondsOffset = 0;
 
     std::vector<std::filesystem::path> mPaths;
@@ -30,7 +32,7 @@ private:
 
     std::filesystem::path mDestinationPath;
 
-    static void printUsage(const char *programName);
+    void printUsage();
 
     [[nodiscard]] bool isFileValid(const std::filesystem::path &path) const;
 };

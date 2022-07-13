@@ -8,12 +8,23 @@
 
 #include "time_stamp.h"
 
+#ifdef _WIN32
+#   define PATH_DIVIDER '\\'
+#else
+#   define PATH_DIVIDER '/'
+#endif
+
 namespace fs = std::filesystem;
 using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::move, std::regex, std::ifstream,
         std::ofstream, std::string, std::getline, std::smatch;
 
 bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
     // Why the FUCK is getopt not available with MSVC!?
+
+
+    // Extract executable filename from executable path
+    mExecutableName = argv[0];
+    mExecutableName = mExecutableName.substr(mExecutableName.find_last_of(PATH_DIVIDER) + 1);
 
     // Index of current argument in argv
     int i;
@@ -25,7 +36,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
             auto flag = argv[i][j];
 
             if (flag == 'h') {
-                printUsage(argv[0]);
+                printUsage();
                 exit(0);
 
             } else if (flag == 'm') {
@@ -77,7 +88,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
 
     // There must be at least two arguments after options
     if (i > argc - 2) {
-        printUsage(argv[0]);
+        printUsage();
         return false;
     }
 
@@ -156,8 +167,8 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
     return mAreArgumentsValid = true;
 }
 
-void SubtitleShifter::printUsage(const char *programName) {
-    cout << "Usage: " << programName << R"( [option]... <offset-ms> <path>...
+void SubtitleShifter::printUsage() {
+    cout << "Usage: " << mExecutableName << R"( [option]... <offset-ms> <path>...
 
     -h                      Print this message and exit
     -m                      Modify the file(s) instead of creating new file(s) with the shifted subtitles
