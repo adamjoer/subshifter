@@ -33,56 +33,66 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
     for (i = 1; i < argc && argv[i][0] == '-' && !isdigit(argv[i][1]); ++i) {
 
         for (int j = 1, len = (int) strlen(argv[i]); j < len; ++j) {
+            bool doBreak = false;
+
             auto flag = argv[i][j];
+            switch (flag) {
+                case 'h':
+                    printUsage();
+                    exit(0);
 
-            if (flag == 'h') {
-                printUsage();
-                exit(0);
+                case 'm':
+                    if (mIsDestinationPathSpecified) {
+                        cerr << "Switches 'm' and 'd' are incongruous\n";
+                        return false;
+                    }
 
-            } else if (flag == 'm') {
-                if (mIsDestinationPathSpecified) {
-                    cerr << "Switches 'm' and 'd' are incongruous\n";
+                    mDoModify = true;
+                    break;
+
+                case 'd':
+                    if (mDoModify) {
+                        cerr << "Switches 'm' and 'd' are incongruous\n";
+                        return false;
+                    }
+
+                    if (mIsDestinationPathSpecified)
+                        continue;
+
+                    if (i >= argc - 1 && j >= len - 1) {
+                        cerr << "No destination path specified after 'd' switch\n";
+                        return false;
+                    }
+
+                    if (fs::path destinationPath((j < len - 1) ? &argv[i][j + 1] : argv[++i]);
+                            !fs::is_directory(destinationPath)) {
+                        cerr << "Invalid directory " << destinationPath << '\n';
+                        return false;
+
+                    } else {
+                        mDestinationPath = destinationPath;
+                    }
+
+                    mIsDestinationPathSpecified = true;
+
+                    doBreak = true;
+                    break;
+
+                case 'i':
+                    mIgnoreInvalidFiles = true;
+                    break;
+
+                case 'r':
+                    mDoRecurse = true;
+                    break;
+
+                default:
+                    cerr << "Unknown switch '" << flag << "'\n";
                     return false;
-                }
-
-                mDoModify = true;
-
-            } else if (flag == 'd') {
-                if (mDoModify) {
-                    cerr << "Switches 'm' and 'd' are incongruous\n";
-                    return false;
-                }
-
-                if (mIsDestinationPathSpecified)
-                    continue;
-
-                if (i == argc - 1 && j == len - 1) {
-                    cerr << "No destination path specified after 'd' switch\n";
-                    return false;
-                }
-
-                fs::path destinationPath((j == len - 1) ? argv[++i] : argv[i] + j + 1);
-
-                if (!fs::is_directory(destinationPath)) {
-                    cerr << "Invalid directory " << destinationPath << '\n';
-                    return false;
-                }
-
-                mDestinationPath = destinationPath;
-                mIsDestinationPathSpecified = true;
-
-                break;
-
-            } else if (flag == 'i') {
-                mIgnoreInvalidFiles = true;
-
-            } else if (flag == 'r') {
-                mDoRecurse = true;
-
-            } else {
-                cerr << "Unknown switch '" << flag << "'\n";
-                return false;
             }
+
+            if (doBreak)
+                break;
         }
     }
 
