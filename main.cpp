@@ -4,8 +4,11 @@ int main(int argc, char *argv[]) {
 
     SubtitleShifter shifter;
 
-    if (!shifter.parseArguments(argc, argv))
+    if (auto status = shifter.parseArguments(argc, argv); status != ParseStatus::Continue) {
+        if (status == ParseStatus::Exit)
+            return 0;
         return 1;
+    }
 
     shifter.shift();
 

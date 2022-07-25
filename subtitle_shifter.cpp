@@ -18,9 +18,7 @@ namespace fs = std::filesystem;
 using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::move, std::regex, std::ifstream,
         std::ofstream, std::string, std::getline, std::smatch;
 
-bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
-    // Why the FUCK is getopt not available with MSVC!?
-
+ParseStatus SubtitleShifter::parseArguments(int argc, char *argv[]) {
 
     // Extract executable filename from executable path
     mExecutableName = argv[0];
@@ -39,12 +37,12 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
             switch (flag) {
                 case 'h':
                     printUsage();
-                    exit(0);
+                    return ParseStatus::Exit;
 
                 case 'm':
                     if (mIsDestinationPathSpecified) {
                         cerr << "Switches 'm' and 'd' are incongruous\n";
-                        return false;
+                        return ParseStatus::Error;
                     }
 
                     mDoModify = true;
@@ -53,7 +51,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
                 case 'd':
                     if (mDoModify) {
                         cerr << "Switches 'm' and 'd' are incongruous\n";
-                        return false;
+                        return ParseStatus::Error;
                     }
 
                     if (mIsDestinationPathSpecified)
@@ -61,13 +59,13 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
 
                     if (i >= argc - 1 && j >= len - 1) {
                         cerr << "No destination path specified after 'd' switch\n";
-                        return false;
+                        return ParseStatus::Error;
                     }
 
                     if (fs::path destinationPath((j < len - 1) ? &argv[i][j + 1] : argv[++i]);
                             !fs::is_directory(destinationPath)) {
                         cerr << "Invalid directory " << destinationPath << '\n';
-                        return false;
+                        return ParseStatus::Error;
 
                     } else {
                         mDestinationPath = destinationPath;
@@ -88,7 +86,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
 
                 default:
                     cerr << "Unknown switch '" << flag << "'\n";
-                    return false;
+                    return ParseStatus::Error;
             }
 
             if (doBreak)
@@ -99,7 +97,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
     // There must be at least two arguments after options
     if (i > argc - 2) {
         printUsage();
-        return false;
+        return ParseStatus::Error;
     }
 
     // Parse offset-ms
@@ -108,11 +106,11 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
 
     } catch (invalid_argument &exception) {
         cerr << "Invalid number \"" << argv[i] << "\"\n";
-        return false;
+        return ParseStatus::Error;
 
     } catch (out_of_range &exception) {
         cerr << "Number is out of range: " << argv[i] << '\n';
-        return false;
+        return ParseStatus::Error;
     }
 
     // Parse paths
@@ -127,7 +125,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
             if (!isFileValid(path)) {
                 if (mIgnoreInvalidFiles)
                     continue;
-                return false;
+                return ParseStatus::Error;
             }
 
             mPaths.push_back(move(path));
@@ -142,7 +140,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
                     if (!isFileValid(directoryEntry.path())) {
                         if (mIgnoreInvalidFiles)
                             continue;
-                        return false;
+                        return ParseStatus::Error;
                     }
 
                     mPaths.push_back(directoryEntry.path());
@@ -156,7 +154,7 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
                     if (!isFileValid(directoryEntry.path())) {
                         if (mIgnoreInvalidFiles)
                             continue;
-                        return false;
+                        return ParseStatus::Error;
                     }
 
                     mPaths.push_back(directoryEntry.path());
@@ -165,16 +163,17 @@ bool SubtitleShifter::parseArguments(int argc, char *const argv[]) {
 
         } else {
             cerr << "Invalid file/directory " << path << '\n';
-            return false;
+            return ParseStatus::Error;
         }
     }
 
     if (mPaths.empty()) {
         cerr << "No valid files provided\n";
-        return false;
+        return ParseStatus::Error;
     }
 
-    return mAreArgumentsValid = true;
+    mAreArgumentsValid = true;
+    return ParseStatus::Continue;
 }
 
 void SubtitleShifter::printUsage() {

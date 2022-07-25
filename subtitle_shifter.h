@@ -3,13 +3,19 @@
 #include <vector>
 #include <filesystem>
 
+enum class ParseStatus {
+    Continue,
+    Exit,
+    Error,
+};
+
 class SubtitleShifter {
 public:
     SubtitleShifter() = default;
 
     ~SubtitleShifter() = default;
 
-    bool parseArguments(int argc, char *const argv[]);
+    ParseStatus parseArguments(int argc, char *argv[]);
 
     void shift();
 
