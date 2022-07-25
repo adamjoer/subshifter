@@ -179,7 +179,8 @@ ParseStatus SubtitleShifter::parseArguments(int argc, char *argv[]) {
 void SubtitleShifter::printUsage() {
     cout << "Usage: " << mExecutableName << R"( [option]... <offset-ms> <path>...
 
-    -h                      Print this message and exit
+Options:
+    -h                      Show this message and exit
     -m                      Modify the file(s) instead of creating new file(s) with the shifted subtitles
     -d <destination-path>   Set destination directory for output files
     -r                      Recursively add files in a directory and its subdirectories
