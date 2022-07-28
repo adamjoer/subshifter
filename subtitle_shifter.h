@@ -15,7 +15,7 @@ public:
 
     ~SubtitleShifter() = default;
 
-    ParseStatus parseArguments(int argc, char *argv[]);
+    ParseStatus parseArguments(int argc, const char *const argv[]);
 
     void shift();
 

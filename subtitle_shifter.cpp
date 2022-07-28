@@ -18,7 +18,7 @@ namespace fs = std::filesystem;
 using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::move, std::regex, std::ifstream,
         std::ofstream, std::string, std::getline, std::smatch;
 
-ParseStatus SubtitleShifter::parseArguments(int argc, char *argv[]) {
+ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) {
 
     // Extract executable filename from executable path
     mExecutableName = argv[0];
