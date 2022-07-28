@@ -49,7 +49,7 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
         po::notify(map);
 
     } catch (po::error &error) {
-        cerr << error.what() << '\n';
+        cerr << mExecutableName << ": " << error.what() << '\n';
         return ParseStatus::Error;
     }
 
@@ -68,21 +68,20 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
 
     mDestinationPath = map["destination-path"].as<string>();
     if (!fs::is_directory(mDestinationPath)) {
-        cerr << "Invalid directory " << mDestinationPath << '\n';
+        cerr << mExecutableName << ": invalid directory " << mDestinationPath << '\n';
         return ParseStatus::Error;
     }
 
     if (map.count("modify-files")) {
         if (mDestinationPath != ".") {
-            cerr << "Options '--modify-files' and '--destination-path' are incongruous\n";
+            cerr << mExecutableName << ": options '--modify-files' and '--destination-path' are incongruous\n";
             return ParseStatus::Error;
         }
         mDoModify = true;
     }
 
-    if (map.count("recurse")) {
+    if (map.count("recurse"))
         mDoRecurse = true;
-    }
 
     if (map.count("ignore"))
         mIgnoreInvalidFiles = true;
@@ -138,13 +137,13 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
             }
 
         } else {
-            cerr << "Invalid file/directory " << path << '\n';
+            cerr << mExecutableName << ": invalid file/directory " << path << '\n';
             return ParseStatus::Error;
         }
     }
 
     if (mPaths.empty()) {
-        cerr << "No valid files provided\n";
+        cerr << mExecutableName << ": no valid files provided\n";
         return ParseStatus::Error;
     }
 
@@ -166,7 +165,7 @@ void SubtitleShifter::shift() {
 
         ifstream inStream(path);
         if (!inStream.is_open()) {
-            cerr << "Cannot open input file " << path << "\n";
+            cerr << mExecutableName << ": cannot open input file " << path << "\n";
             return;
         }
 
@@ -175,7 +174,7 @@ void SubtitleShifter::shift() {
 
         ofstream outStream(outputPath);
         if (!outStream.is_open()) {
-            cerr << "Cannot open output file " << outputPath << "\n";
+            cerr << mExecutableName << ": cannot open output file " << outputPath << "\n";
             return;
         }
 
@@ -220,7 +219,7 @@ void SubtitleShifter::shift() {
                 fs::remove(outputPath);
 
             } catch (fs::filesystem_error &error) {
-                cerr << error.what() << '\n';
+                cerr << mExecutableName << ": " << error.what() << '\n';
                 return;
             }
         }
@@ -230,8 +229,8 @@ void SubtitleShifter::shift() {
 bool SubtitleShifter::isFileValid(const std::filesystem::path &path) const {
     if (path.extension() != ".srt") {
         if (!mIgnoreInvalidFiles) {
-            cerr << "File type " << path.extension() << " (" << path << ") is not supported.\n"
-                                                                        "Supported file types are: .srt\n";
+            cerr << mExecutableName << ": file type " << path.extension() << " (" << path << ") is not supported.\n"
+                 << "Supported file types are: .srt\n";
         }
         return false;
     }
@@ -240,13 +239,13 @@ bool SubtitleShifter::isFileValid(const std::filesystem::path &path) const {
 
     if ((status.permissions() & fs::perms::group_read) == fs::perms::none) {
         if (!mIgnoreInvalidFiles)
-            cerr << "There are insufficient permissions to read file " << path << '\n';
+            cerr << mExecutableName << ": there are insufficient permissions to read file " << path << '\n';
         return false;
     }
 
     if (mDoModify && (status.permissions() & fs::perms::group_write) == fs::perms::none) {
         if (!mIgnoreInvalidFiles)
-            cerr << "There are insufficient permissions to modify file " << path << '\n';
+            cerr << mExecutableName << ": there are insufficient permissions to modify file " << path << '\n';
         return false;
     }
 
