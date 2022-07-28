@@ -9,9 +9,9 @@ struct TimeStamp {
     }
 
     TimeStamp(int hours, int minutes, int seconds, int milliseconds) : milliseconds(milliseconds) {
-        this->milliseconds += seconds * 1000;
-        this->milliseconds += minutes * 1000 * 60;
-        this->milliseconds += hours * 1000 * 60 * 60;
+        this->milliseconds += seconds * 1000 +
+                              minutes * 1000 * 60 +
+                              hours * 1000 * 60 * 60;
     }
 
     [[nodiscard]] bool isNegative() const {
