@@ -30,15 +30,11 @@ private:
 
     bool mDoModify = false;
 
-    bool mIsDestinationPathSpecified = false;
-
     bool mDoRecurse = false;
 
     bool mIgnoreInvalidFiles = false;
 
     std::filesystem::path mDestinationPath;
-
-    void printUsage();
 
     [[nodiscard]] bool isFileValid(const std::filesystem::path &path) const;
 };

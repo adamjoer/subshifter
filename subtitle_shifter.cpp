@@ -1,10 +1,11 @@
 #include "subtitle_shifter.h"
 
 #include <algorithm>
-#include <cstring>
 #include <iostream>
 #include <regex>
 #include <fstream>
+
+#include <boost/program_options.hpp>
 
 #include "time_stamp.h"
 
@@ -14,9 +15,9 @@
 #   define PATH_DIVIDER '/'
 #endif
 
+namespace po = boost::program_options;
 namespace fs = std::filesystem;
-using std::cout, std::cerr, std::stoi, std::invalid_argument, std::out_of_range, std::move, std::regex, std::ifstream,
-        std::ofstream, std::string, std::getline, std::smatch;
+using std::cout, std::cerr, std::vector, std::move, std::regex, std::ifstream, std::ofstream, std::string, std::getline, std::smatch;
 
 ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) {
 
@@ -24,99 +25,74 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
     mExecutableName = argv[0];
     mExecutableName = mExecutableName.substr(mExecutableName.find_last_of(PATH_DIVIDER) + 1);
 
-    // Index of current argument in argv
-    int i;
+    po::options_description description("Options");
+    description.add_options()
+            ("help,h", "Show this message and exit")
+            ("modify-files,m", "Modify the file(s) instead of creating new file(s) with the shifted subtitles")
+            ("destination-path,d", po::value<string>()->default_value("."),
+             "Set destination directory for output files")
+            ("recurse,r", "Recursively add files in a directory and its subdirectories")
+            ("ignore,i", "Ignore invalid files provided with input-path")
+            ("offset-ms", po::value<int>(), "Milliseconds by which subtitles will be offset")
+            ("input-path", po::value<vector<string>>(), "Input subtitle files");
 
-    // Parse any potential options
-    for (i = 1; i < argc && argv[i][0] == '-' && !isdigit(argv[i][1]); ++i) {
+    po::positional_options_description positionalDescription;
+    positionalDescription.add("offset-ms", 1).add("input-path", -1);
 
-        for (int j = 1, len = (int) strlen(argv[i]); j < len; ++j) {
-            bool doBreak = false;
+    po::variables_map map;
 
-            auto flag = argv[i][j];
-            switch (flag) {
-                case 'h':
-                    printUsage();
-                    return ParseStatus::Exit;
-
-                case 'm':
-                    if (mIsDestinationPathSpecified) {
-                        cerr << "Switches 'm' and 'd' are incongruous\n";
-                        return ParseStatus::Error;
-                    }
-
-                    mDoModify = true;
-                    break;
-
-                case 'd':
-                    if (mDoModify) {
-                        cerr << "Switches 'm' and 'd' are incongruous\n";
-                        return ParseStatus::Error;
-                    }
-
-                    if (mIsDestinationPathSpecified)
-                        continue;
-
-                    if (i >= argc - 1 && j >= len - 1) {
-                        cerr << "No destination path specified after 'd' switch\n";
-                        return ParseStatus::Error;
-                    }
-
-                    if (fs::path destinationPath((j < len - 1) ? &argv[i][j + 1] : argv[++i]);
-                            !fs::is_directory(destinationPath)) {
-                        cerr << "Invalid directory " << destinationPath << '\n';
-                        return ParseStatus::Error;
-
-                    } else {
-                        mDestinationPath = destinationPath;
-                    }
-
-                    mIsDestinationPathSpecified = true;
-
-                    doBreak = true;
-                    break;
-
-                case 'i':
-                    mIgnoreInvalidFiles = true;
-                    break;
-
-                case 'r':
-                    mDoRecurse = true;
-                    break;
-
-                default:
-                    cerr << "Unknown switch '" << flag << "'\n";
-                    return ParseStatus::Error;
-            }
-
-            if (doBreak)
-                break;
-        }
-    }
-
-    // There must be at least two arguments after options
-    if (i > argc - 2) {
-        printUsage();
-        return ParseStatus::Error;
-    }
-
-    // Parse offset-ms
     try {
-        mMillisecondsOffset = stoi(argv[i]);
+        po::store(
+                po::command_line_parser(argc, argv).options(description).positional(positionalDescription).run(),
+                map
+        );
+        po::notify(map);
 
-    } catch (invalid_argument &exception) {
-        cerr << "Invalid number \"" << argv[i] << "\"\n";
-        return ParseStatus::Error;
-
-    } catch (out_of_range &exception) {
-        cerr << "Number is out of range: " << argv[i] << '\n';
+    } catch (po::error &error) {
+        cerr << error.what() << '\n';
         return ParseStatus::Error;
     }
+
+    if (map.count("help")) {
+        cout << "Usage: " << mExecutableName << " [option]... <offset-ms> <input-path>...\n\n"
+             << description << '\n';
+        return ParseStatus::Exit;
+    }
+
+    // Offset and input path must be provided
+    if (!map.count("offset-ms") || !map.count("input-path")) {
+        cout << "Usage: " << mExecutableName << " [option]... <offset-ms> <input-path>...\n\n"
+             << description << '\n';
+        return ParseStatus::Error;
+    }
+
+    mDestinationPath = map["destination-path"].as<string>();
+    if (!fs::is_directory(mDestinationPath)) {
+        cerr << "Invalid directory " << mDestinationPath << '\n';
+        return ParseStatus::Error;
+    }
+
+    if (map.count("modify-files")) {
+        if (mDestinationPath != ".") {
+            cerr << "Options '--modify-files' and '--destination-path' are incongruous\n";
+            return ParseStatus::Error;
+        }
+        mDoModify = true;
+    }
+
+    if (map.count("recurse")) {
+        mDoRecurse = true;
+    }
+
+    if (map.count("ignore"))
+        mIgnoreInvalidFiles = true;
+
+    mMillisecondsOffset = map["offset-ms"].as<int>();
 
     // Parse paths
-    for (++i; i < argc; ++i) {
+    for (const auto &inputPath: map["input-path"].as<vector<string>>()) {
 
-        fs::path path(argv[i]);
+        fs::path path(inputPath);
         if (path.filename() == "*")
             path.remove_filename();
 
@@ -176,19 +152,6 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
     return ParseStatus::Continue;
 }
 
-void SubtitleShifter::printUsage() {
-    cout << "Usage: " << mExecutableName << R"( [option]... <offset-ms> <path>...
-
-Options:
-    -h                      Show this message and exit
-    -m                      Modify the file(s) instead of creating new file(s) with the shifted subtitles
-    -d <destination-path>   Set destination directory for output files
-    -r                      Recursively add files in a directory and its subdirectories
-    -i                      Ignore invalid files provided with <path>
-
-)";
-}
-
 void SubtitleShifter::shift() {
     if (!mAreArgumentsValid || mPaths.empty())
         return;
@@ -208,8 +171,7 @@ void SubtitleShifter::shift() {
         }
 
         fs::path outputPath(path.stem().string() + "_shifted" + path.extension().string());
-        if (mIsDestinationPathSpecified)
-            outputPath = mDestinationPath / outputPath;
+        outputPath = mDestinationPath / outputPath;
 
         ofstream outStream(outputPath);
         if (!outStream.is_open()) {
