@@ -18,8 +18,8 @@
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
-using std::cout, std::cerr, std::vector, std::move, std::regex, std::ifstream, std::ostringstream, std::string,
-        std::ofstream, std::getline, std::smatch;
+using std::cout, std::cerr, std::vector, std::regex, std::ifstream, std::ostringstream, std::string, std::ofstream,
+        std::getline, std::smatch;
 
 ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) {
 
@@ -105,7 +105,7 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
                 return ParseStatus::Error;
             }
 
-            mPaths.push_back(move(path));
+            mPaths.push_back(std::move(path));
 
         } else if (fs::is_directory(path)) {
 
