@@ -4,6 +4,7 @@
 #include <iostream>
 #include <regex>
 #include <fstream>
+#include <sstream>
 
 #include <boost/program_options.hpp>
 
@@ -17,7 +18,8 @@
 
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
-using std::cout, std::cerr, std::vector, std::move, std::regex, std::ifstream, std::ofstream, std::string, std::getline, std::smatch;
+using std::cout, std::cerr, std::vector, std::move, std::regex, std::ifstream, std::ostringstream, std::string,
+        std::ofstream, std::getline, std::smatch;
 
 ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) {
 
@@ -164,17 +166,18 @@ void SubtitleShifter::shift() {
     for (const auto &path: mPaths) {
 
         ifstream inStream(path);
-        if (!inStream.is_open()) {
-            cerr << mExecutableName << ": cannot open input file " << path << "\n";
+        if (!inStream) {
+            cerr << mExecutableName << ": cannot open input file " << path << '\n';
             return;
         }
 
-        fs::path outputPath(path.stem().string() + "_shifted" + path.extension().string());
-        outputPath = mDestinationPath / outputPath;
+        fs::path outputPath(mDoModify ? path.string() : path.stem().string() + "_shifted" + path.extension().string());
+        if (!mDoModify)
+            outputPath = mDestinationPath / outputPath;
 
-        ofstream outStream(outputPath);
-        if (!outStream.is_open()) {
-            cerr << mExecutableName << ": cannot open output file " << outputPath << "\n";
+        ostringstream outBuffer;
+        if (!outBuffer) {
+            cerr << mExecutableName << ": cannot create output buffer\n";
             return;
         }
 
@@ -197,32 +200,28 @@ void SubtitleShifter::shift() {
 
                 if (from.isNegative() || to.isNegative()) {
                     cout << "Warning: Shifting has produced negative timestamp in file "
-                         << (mDoModify ? path : outputPath) << ", line #" << lineNumber << '\n';
+                         << outputPath << ", line #" << lineNumber << '\n';
                 }
 
-                outStream << from << " --> " << to;
+                outBuffer << from << " --> " << to;
 
             } else if (!line.empty()) {
-                outStream << line;
+                outBuffer << line;
             }
 
-            outStream << '\n';
+            outBuffer << '\n';
             ++lineNumber;
         }
 
-        if (mDoModify) {
-            inStream.close();
-            outStream.close();
+        inStream.close();
 
-            try {
-                fs::rename(outputPath, path);
-                fs::remove(outputPath);
-
-            } catch (fs::filesystem_error &error) {
-                cerr << mExecutableName << ": " << error.what() << '\n';
-                return;
-            }
+        ofstream outStream(outputPath);
+        if (!outStream) {
+            cerr << mExecutableName << ": cannot open output file " << outputPath << '\n';
+            return;
         }
+
+        outStream << outBuffer.str();
     }
 }
 
