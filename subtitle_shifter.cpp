@@ -1,7 +1,10 @@
 #include "subtitle_shifter.h"
 
-#include <algorithm>
 #include <iostream>
+#include <string>
+#include <vector>
+#include <filesystem>
+#include <utility>
 #include <regex>
 #include <fstream>
 #include <sstream>
