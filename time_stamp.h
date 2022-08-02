@@ -40,7 +40,7 @@ struct TimeStamp {
         int hoursOutput = minutesOutput / 60;
         minutesOutput = minutesOutput % 60;
 
-        if (timeStamp.milliseconds < 0)
+        if (timeStamp.isNegative())
             outputStream << '-';
 
         if (hoursOutput < 10)
