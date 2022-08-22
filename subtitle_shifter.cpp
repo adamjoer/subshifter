@@ -4,7 +4,6 @@
 #include <string>
 #include <vector>
 #include <filesystem>
-#include <utility>
 #include <regex>
 #include <fstream>
 #include <sstream>
@@ -71,10 +70,12 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
         return ParseStatus::Error;
     }
 
-    mDestinationPath = map["destination-path"].as<string>();
-    if (!fs::is_directory(mDestinationPath)) {
-        cerr << mExecutableName << ": invalid directory " << mDestinationPath << '\n';
-        return ParseStatus::Error;
+    if (fs::path destinationPath(map["destination-path"].as<string>()); destinationPath != ".") {
+        if (!fs::is_directory(destinationPath)) {
+            cerr << mExecutableName << ": invalid directory " << destinationPath << '\n';
+            return ParseStatus::Error;
+        }
+        setDestinationPath(destinationPath);
     }
 
     if (map.count("modify-files")) {
@@ -82,16 +83,16 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
             cerr << mExecutableName << ": options '--modify-files' and '--destination-path' are incongruous\n";
             return ParseStatus::Error;
         }
-        mDoModify = true;
+        setDoModify(true);
     }
 
     if (map.count("recurse"))
-        mDoRecurse = true;
+        setDoRecurse(true);
 
     if (map.count("ignore"))
-        mIgnoreInvalidFiles = true;
+        setIgnoreInvalidFiles(true);
 
-    mMillisecondsOffset = map["offset-ms"].as<int>();
+    setMillisecondsOffset(map["offset-ms"].as<int>());
 
     // Parse paths
     for (const auto &inputPath: map["input-path"].as<vector<string>>()) {
@@ -108,7 +109,7 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
                 return ParseStatus::Error;
             }
 
-            mPaths.push_back(std::move(path));
+            addFilePath(path);
 
         } else if (fs::is_directory(path)) {
 
@@ -123,7 +124,7 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
                         return ParseStatus::Error;
                     }
 
-                    mPaths.push_back(directoryEntry.path());
+                    addFilePath(directoryEntry.path());
                 }
 
             } else {
@@ -137,7 +138,7 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
                         return ParseStatus::Error;
                     }
 
-                    mPaths.push_back(directoryEntry.path());
+                    addFilePath(directoryEntry.path());
                 }
             }
 
@@ -152,12 +153,15 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
         return ParseStatus::Error;
     }
 
-    mAreArgumentsValid = true;
     return ParseStatus::Continue;
 }
 
+void SubtitleShifter::addFilePath(const fs::path &path) {
+    mPaths.push_back(path);
+}
+
 void SubtitleShifter::shift() {
-    if (!mAreArgumentsValid || mPaths.empty())
+    if (mPaths.empty())
         return;
 
     // https://regex101.com/r/w2aGaG/1
