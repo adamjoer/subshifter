@@ -38,8 +38,6 @@ public:
 private:
     std::string mExecutableName;
 
-    int mMillisecondsOffset = 0;
-
     std::vector<std::filesystem::path> mPaths;
 
     bool mDoModify = false;
@@ -47,6 +45,8 @@ private:
     bool mDoRecurse = false;
 
     bool mIgnoreInvalidFiles = false;
+
+    int mMillisecondsOffset = 0;
 
     std::filesystem::path mDestinationPath = ".";
 
