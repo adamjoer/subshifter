@@ -58,16 +58,20 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
         return ParseStatus::Error;
     }
 
-    if (map.count("help")) {
+    // Lambda function to avoid code duplication in the next two if-statements
+    auto printHelpMessage = [&]() {
         cout << "Usage: " << mExecutableName << " [option]... <offset-ms> <input-path>...\n\n"
              << description << '\n';
+    };
+
+    if (map.count("help")) {
+        printHelpMessage();
         return ParseStatus::Exit;
     }
 
     // Offset and input path must be provided
     if (!map.count("offset-ms") || !map.count("input-path")) {
-        cout << "Usage: " << mExecutableName << " [option]... <offset-ms> <input-path>...\n\n"
-             << description << '\n';
+        printHelpMessage();
         return ParseStatus::Error;
     }
 
