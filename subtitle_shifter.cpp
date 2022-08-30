@@ -21,7 +21,7 @@
 namespace po = boost::program_options;
 namespace fs = std::filesystem;
 using std::cout, std::cerr, std::vector, std::regex, std::ifstream, std::ostringstream, std::string, std::ofstream,
-        std::getline, std::smatch;
+    std::getline, std::smatch;
 
 ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) {
 
@@ -31,14 +31,13 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
 
     po::options_description description("Options");
     description.add_options()
-            ("help,h", "Show this message and exit")
-            ("modify-files,m", "Modify the file(s) instead of creating new file(s) with the shifted subtitles")
-            ("destination-path,d", po::value<string>()->default_value("."),
-             "Set destination directory for output files")
-            ("recurse,r", "Recursively add files in a directory and its subdirectories")
-            ("ignore,i", "Ignore invalid files provided with input-path")
-            ("offset-ms", po::value<int>(), "Milliseconds by which subtitles will be offset")
-            ("input-path", po::value<vector<string>>(), "Input subtitle files");
+        ("help,h", "Show this message and exit")
+        ("modify-files,m", "Modify the file(s) instead of creating new file(s) with the shifted subtitles")
+        ("destination-path,d", po::value<string>()->default_value("."), "Set destination directory for output files")
+        ("recurse,r", "Recursively add files in a directory and its subdirectories")
+        ("ignore,i", "Ignore invalid files provided with input-path")
+        ("offset-ms", po::value<int>(), "Milliseconds by which subtitles will be offset")
+        ("input-path", po::value<vector<string>>(), "Input subtitle files");
 
     po::positional_options_description positionalDescription;
     positionalDescription.add("offset-ms", 1).add("input-path", -1);
@@ -47,8 +46,10 @@ ParseStatus SubtitleShifter::parseArguments(int argc, const char *const argv[]) 
 
     try {
         po::store(
-                po::command_line_parser(argc, argv).options(description).positional(positionalDescription).run(),
-                map
+            po::command_line_parser(argc, argv)
+                .options(description).positional(positionalDescription)
+                .run(),
+            map
         );
         po::notify(map);
 
@@ -166,7 +167,8 @@ void SubtitleShifter::shift() {
 
     // https://regex101.com/r/w2aGaG/1
     const regex srtTimeStampRegex(
-            R"(^(0\d|[1-9]\d+):([0-5]\d):([0-5]\d),(\d{3}) --> (0\d|[1-9]\d+):([0-5]\d):([0-5]\d),(\d{3})$)");
+        R"(^(0\d|[1-9]\d+):([0-5]\d):([0-5]\d),(\d{3}) --> (0\d|[1-9]\d+):([0-5]\d):([0-5]\d),(\d{3})$)"
+    );
 
     const TimeStamp offset(mMillisecondsOffset);
 
@@ -178,7 +180,9 @@ void SubtitleShifter::shift() {
             return;
         }
 
-        fs::path outputPath(mDoModify ? path.string() : path.stem().string() + "_shifted" + path.extension().string());
+        fs::path outputPath(
+            mDoModify ? path.string() : path.stem().string() + "_shifted" + path.extension().string()
+        );
         if (!mDoModify)
             outputPath = mDestinationPath / outputPath;
 
